@@ -1,5 +1,5 @@
 import "server-only";
-import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { format, addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { Prisma, type ExpenseCategory } from "@/generated/prisma/client";
 import { CATEGORY_LABELS } from "@/lib/validations";
@@ -30,11 +30,11 @@ export type DashboardSummary = {
 
 function buildMonthlySeries(
   items: { date: Date; amount: { toString(): string } }[],
-  monthsBack = 5
+  monthsForward = 5
 ): MonthlyPoint[] {
   const now = new Date();
-  const buckets = Array.from({ length: monthsBack }, (_, index) => {
-    const d = subMonths(now, monthsBack - 1 - index);
+  const buckets = Array.from({ length: monthsForward }, (_, index) => {
+    const d = addMonths(now, index);
     return { key: format(d, "yyyy-MM"), month: format(d, "MMM yyyy"), total: 0 };
   });
   const bucketMap = new Map(buckets.map((bucket) => [bucket.key, bucket]));
