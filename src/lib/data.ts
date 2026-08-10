@@ -17,6 +17,18 @@ export type Transaction = {
 
 export type MonthlyPoint = { month: string; total: number };
 
+export type CategorySummary = {
+  category: ExpenseCategory;
+  label: string;
+  amount: number;
+  percentage: number;
+};
+
+export type MoneyLentSummary = {
+  total: number;
+  count: number;
+};
+
 export type DashboardSummary = {
   currentBalance: number;
   totalIncome: number;
@@ -26,6 +38,8 @@ export type DashboardSummary = {
   recentTransactions: Transaction[];
   monthlyIncome: MonthlyPoint[];
   monthlyExpense: MonthlyPoint[];
+  expenseByCategory: CategorySummary[];
+  moneyLent: MoneyLentSummary;
 };
 
 function buildMonthlySeries(
@@ -49,9 +63,10 @@ function buildMonthlySeries(
 }
 
 export async function getDashboardSummary(userId: string): Promise<DashboardSummary> {
-  const [incomes, expenses] = await Promise.all([
+  const [incomes, expenses, pendingLoans] = await Promise.all([
     prisma.income.findMany({ where: { userId }, orderBy: { date: "desc" } }),
     prisma.expense.findMany({ where: { userId }, orderBy: { date: "desc" } }),
+    prisma.moneyLent.findMany({ where: { userId, status: "PENDING" }, select: { amount: true } }),
   ]);
 
   const totalIncome = incomes.reduce((sum, item) => sum + toNumber(item.amount), 0);
@@ -65,9 +80,27 @@ export async function getDashboardSummary(userId: string): Promise<DashboardSumm
     .filter((item) => item.date >= monthStart && item.date <= monthEnd)
     .reduce((sum, item) => sum + toNumber(item.amount), 0);
 
-  const monthExpense = expenses
-    .filter((item) => item.date >= monthStart && item.date <= monthEnd)
-    .reduce((sum, item) => sum + toNumber(item.amount), 0);
+  const monthExpenses = expenses.filter((item) => item.date >= monthStart && item.date <= monthEnd);
+  const monthExpense = monthExpenses.reduce((sum, item) => sum + toNumber(item.amount), 0);
+
+  const categoryTotals = new Map<ExpenseCategory, number>();
+  for (const item of monthExpenses) {
+    categoryTotals.set(item.category, (categoryTotals.get(item.category) ?? 0) + toNumber(item.amount));
+  }
+  const expenseByCategory: CategorySummary[] = Array.from(categoryTotals.entries())
+    .map(([category, amount]) => ({
+      category,
+      label: CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS],
+      amount: Math.round(amount * 100) / 100,
+      percentage: monthExpense > 0 ? Math.round((amount / monthExpense) * 1000) / 10 : 0,
+    }))
+    .sort((a, b) => b.amount - a.amount);
+
+  const moneyLentTotal = pendingLoans.reduce((sum, item) => sum + toNumber(item.amount), 0);
+  const moneyLent: MoneyLentSummary = {
+    total: Math.round(moneyLentTotal * 100) / 100,
+    count: pendingLoans.length,
+  };
 
   const recentTransactions: Transaction[] = [
     ...incomes.map((item) => ({
@@ -99,6 +132,8 @@ export async function getDashboardSummary(userId: string): Promise<DashboardSumm
     recentTransactions,
     monthlyIncome: buildMonthlySeries(incomes),
     monthlyExpense: buildMonthlySeries(expenses),
+    expenseByCategory,
+    moneyLent,
   };
 }
 
@@ -174,4 +209,12 @@ export async function getAvailableYears(userId: string): Promise<number[]> {
   for (const item of [...incomes, ...expenses]) years.add(item.date.getFullYear());
 
   return Array.from(years).sort((a, b) => b - a);
+}
+
+export async function getMoneyLentEntries(userId: string) {
+  const entries = await prisma.moneyLent.findMany({
+    where: { userId },
+    orderBy: [{ status: "asc" }, { expectedReturnDate: "asc" }],
+  });
+  return entries.map((item) => ({ ...item, amount: toNumber(item.amount) }));
 }

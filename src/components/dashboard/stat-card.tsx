@@ -13,11 +13,13 @@ const TONE_STYLES: Record<Tone, { text: string; bg: string; icon: string }> = {
 export function StatCard({
   title,
   value,
+  subtitle,
   icon: Icon,
   tone = "neutral",
 }: {
   title: string;
   value: string;
+  subtitle?: string;
   icon: LucideIcon;
   tone?: Tone;
 }) {
@@ -29,6 +31,7 @@ export function StatCard({
         <div className="min-w-0">
           <p className="text-xs leading-tight text-muted-foreground sm:text-sm">{title}</p>
           <p className={cn("mt-1 text-lg font-semibold tabular-nums sm:text-xl", styles.text)}>{value}</p>
+          {subtitle ? <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p> : null}
         </div>
         <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-full", styles.bg)}>
           <Icon className={cn("size-4", styles.icon)} />

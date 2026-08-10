@@ -18,11 +18,13 @@ import {
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { IncomeFormDialog } from "@/components/income/income-form-dialog";
 import { ExpenseFormDialog } from "@/components/expense/expense-form-dialog";
+import { MoneyLentFormDialog } from "@/components/money-lent/money-lent-form-dialog";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/income": "Income",
   "/expenses": "Expenses",
+  "/money-lent": "Money Lent",
   "/profile": "Profile",
 };
 
@@ -93,6 +95,7 @@ export function Topbar({
       <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
         <IncomeFormDialog mode="create" />
         <ExpenseFormDialog mode="create" />
+        <MoneyLentFormDialog mode="create" />
         <Link
           href="/profile"
           className="flex items-center gap-2 rounded-full py-1 pr-1 pl-1 transition-colors hover:bg-accent sm:pr-3"

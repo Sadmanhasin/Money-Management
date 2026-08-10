@@ -8,14 +8,15 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  password  String
-  name      String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  incomes   Income[]
-  expenses  Expense[]
+  id         String      @id @default(cuid())
+  email      String      @unique
+  password   String
+  name       String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  incomes    Income[]
+  expenses   Expense[]
+  moneyLents MoneyLent[]
 }
 
 model Income {
@@ -59,4 +60,25 @@ enum ExpenseCategory {
   EDUCATION
   BUSINESS
   OTHER
+}
+
+model MoneyLent {
+  id                 String      @id @default(cuid())
+  personName         String
+  amount             Decimal     @db.Decimal(12, 2)
+  expectedReturnDate DateTime
+  reason             String?
+  status             LoanStatus  @default(PENDING)
+  userId             String
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum LoanStatus {
+  PENDING
+  RECEIVED
 }

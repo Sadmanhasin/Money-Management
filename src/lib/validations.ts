@@ -77,5 +77,13 @@ export const expenseSchema = z.object({
   note: z.string().trim().max(500, "Note is too long").optional().or(z.literal("")),
 });
 
+export const moneyLentSchema = z.object({
+  personName: z.string().trim().min(1, "Person name is required").max(120, "Name is too long"),
+  amount: amountField,
+  expectedReturnDate: dateField,
+  reason: z.string().trim().max(500, "Reason is too long").optional().or(z.literal("")),
+});
+
 export type IncomeInput = z.infer<typeof incomeSchema>;
 export type ExpenseInput = z.infer<typeof expenseSchema>;
+export type MoneyLentInput = z.infer<typeof moneyLentSchema>;
