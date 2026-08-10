@@ -63,10 +63,10 @@ function buildMonthlySeries(
 }
 
 export async function getDashboardSummary(userId: string): Promise<DashboardSummary> {
-  const [incomes, expenses, pendingLoans] = await Promise.all([
+  const [incomes, expenses, loans] = await Promise.all([
     prisma.income.findMany({ where: { userId }, orderBy: { date: "desc" } }),
     prisma.expense.findMany({ where: { userId }, orderBy: { date: "desc" } }),
-    prisma.moneyLent.findMany({ where: { userId, status: "PENDING" }, select: { amount: true } }),
+    prisma.moneyLent.findMany({ where: { userId }, select: { amount: true, receivedAmount: true } }),
   ]);
 
   const totalIncome = incomes.reduce((sum, item) => sum + toNumber(item.amount), 0);
@@ -96,10 +96,18 @@ export async function getDashboardSummary(userId: string): Promise<DashboardSumm
     }))
     .sort((a, b) => b.amount - a.amount);
 
-  const moneyLentTotal = pendingLoans.reduce((sum, item) => sum + toNumber(item.amount), 0);
+  let moneyLentTotal = 0;
+  let moneyLentCount = 0;
+  for (const loan of loans) {
+    const outstanding = toNumber(loan.amount) - toNumber(loan.receivedAmount);
+    if (outstanding > 0.004) {
+      moneyLentTotal += outstanding;
+      moneyLentCount += 1;
+    }
+  }
   const moneyLent: MoneyLentSummary = {
     total: Math.round(moneyLentTotal * 100) / 100,
-    count: pendingLoans.length,
+    count: moneyLentCount,
   };
 
   const recentTransactions: Transaction[] = [
@@ -124,7 +132,7 @@ export async function getDashboardSummary(userId: string): Promise<DashboardSumm
     .slice(0, 10);
 
   return {
-    currentBalance: Math.round((totalIncome - totalExpense) * 100) / 100,
+    currentBalance: Math.round((totalIncome - totalExpense - moneyLentTotal) * 100) / 100,
     totalIncome: Math.round(totalIncome * 100) / 100,
     totalExpense: Math.round(totalExpense * 100) / 100,
     monthIncome: Math.round(monthIncome * 100) / 100,
@@ -216,5 +224,9 @@ export async function getMoneyLentEntries(userId: string) {
     where: { userId },
     orderBy: [{ status: "asc" }, { expectedReturnDate: "asc" }],
   });
-  return entries.map((item) => ({ ...item, amount: toNumber(item.amount) }));
+  return entries.map((item) => ({
+    ...item,
+    amount: toNumber(item.amount),
+    receivedAmount: toNumber(item.receivedAmount),
+  }));
 }

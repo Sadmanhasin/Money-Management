@@ -84,6 +84,25 @@ export const moneyLentSchema = z.object({
   reason: z.string().trim().max(500, "Reason is too long").optional().or(z.literal("")),
 });
 
+export const paymentSchema = z.object({
+  amount: amountField,
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().min(1, "Email is required").email("Enter a valid email address"),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1, "Reset link is invalid or has expired"),
+    newPassword: z.string().min(8, "Password must be at least 8 characters").max(72, "Password is too long"),
+    confirmPassword: z.string().min(1, "Please confirm your new password"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
 export type IncomeInput = z.infer<typeof incomeSchema>;
 export type ExpenseInput = z.infer<typeof expenseSchema>;
 export type MoneyLentInput = z.infer<typeof moneyLentSchema>;
