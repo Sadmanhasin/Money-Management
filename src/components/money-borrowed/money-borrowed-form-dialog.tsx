@@ -2,23 +2,15 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Minus, Pencil } from "lucide-react";
+import { Landmark, Pencil } from "lucide-react";
 import {
-  createExpenseAction,
-  updateExpenseAction,
-  type ExpenseFormState,
-} from "@/actions/expense";
-import { EXPENSE_CATEGORIES, CATEGORY_LABELS } from "@/lib/validations";
+  createMoneyBorrowedAction,
+  updateMoneyBorrowedAction,
+  type MoneyBorrowedFormState,
+} from "@/actions/money-borrowed";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -29,27 +21,29 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-type ExpenseRecord = {
+type MoneyBorrowedRecord = {
   id: string;
+  personName: string;
   amount: number;
-  category: string;
-  date: Date;
-  note: string | null;
+  borrowedDate: Date;
+  expectedReturnDate: Date;
+  reason: string | null;
 };
 
 type Props =
-  | { mode: "create"; expense?: undefined; compact?: boolean }
-  | { mode: "edit"; expense: ExpenseRecord; compact?: undefined };
+  | { mode: "create"; loan?: undefined }
+  | { mode: "edit"; loan: MoneyBorrowedRecord };
 
 function toDateInputValue(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-export function ExpenseFormDialog({ mode, expense, compact = false }: Props) {
+export function MoneyBorrowedFormDialog({ mode, loan }: Props) {
   const [open, setOpen] = useState(false);
   const [submitCount, setSubmitCount] = useState(0);
-  const action = mode === "edit" ? updateExpenseAction.bind(null, expense.id) : createExpenseAction;
-  const [state, formAction, isPending] = useActionState<ExpenseFormState, FormData>(
+  const action =
+    mode === "edit" ? updateMoneyBorrowedAction.bind(null, loan.id) : createMoneyBorrowedAction;
+  const [state, formAction, isPending] = useActionState<MoneyBorrowedFormState, FormData>(
     action,
     undefined
   );
@@ -59,7 +53,7 @@ export function ExpenseFormDialog({ mode, expense, compact = false }: Props) {
     if (state?.error) {
       toast.error(state.error);
     } else {
-      toast.success(mode === "edit" ? "Expense updated" : "Expense added");
+      toast.success(mode === "edit" ? "Borrowed money updated" : "Borrowed money added");
       setOpen(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,21 +63,21 @@ export function ExpenseFormDialog({ mode, expense, compact = false }: Props) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {mode === "edit" ? (
-          <Button variant="ghost" size="icon-sm" aria-label="Edit expense">
+          <Button variant="ghost" size="icon-sm" aria-label="Edit borrowed money">
             <Pencil className="size-4" />
           </Button>
         ) : (
           <Button size="sm">
-            <Minus className="size-4" />
-            <span className={compact ? "hidden sm:inline" : ""}>Add Expense</span>
+            <Landmark className="size-4" />
+            <span>Money Borrowed</span>
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{mode === "edit" ? "Edit Expense" : "Add Expense"}</DialogTitle>
+          <DialogTitle>{mode === "edit" ? "Edit Borrowed Money" : "Money Borrowed"}</DialogTitle>
           <DialogDescription>
-            {mode === "edit" ? "Update this expense entry." : "Record a new expense entry."}
+            {mode === "edit" ? "Update this borrowed money entry." : "Track money you've borrowed from someone."}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -91,6 +85,16 @@ export function ExpenseFormDialog({ mode, expense, compact = false }: Props) {
           onSubmit={() => setSubmitCount((count) => count + 1)}
           className="flex flex-col gap-4"
         >
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="personName">Person Name</Label>
+            <Input
+              id="personName"
+              name="personName"
+              placeholder="e.g. John Doe"
+              defaultValue={loan?.personName}
+              required
+            />
+          </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="amount">Amount</Label>
             <Input
@@ -100,43 +104,38 @@ export function ExpenseFormDialog({ mode, expense, compact = false }: Props) {
               step="0.01"
               min="0.01"
               placeholder="0.00"
-              defaultValue={expense?.amount}
+              defaultValue={loan?.amount}
               required
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="category">Category</Label>
-            <Select name="category" defaultValue={expense?.category ?? "FOOD"}>
-              <SelectTrigger id="category" className="w-full">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {EXPENSE_CATEGORIES.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {CATEGORY_LABELS[category]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="date">Date</Label>
+            <Label htmlFor="borrowedDate">Borrowed Date</Label>
             <Input
-              id="date"
-              name="date"
+              id="borrowedDate"
+              name="borrowedDate"
               type="date"
-              defaultValue={expense ? toDateInputValue(expense.date) : toDateInputValue(new Date())}
+              defaultValue={loan ? toDateInputValue(loan.borrowedDate) : toDateInputValue(new Date())}
               required
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="note">Note (optional)</Label>
-            <Input id="note" name="note" placeholder="Optional note" defaultValue={expense?.note ?? ""} />
+            <Label htmlFor="expectedReturnDate">Expected Return Date</Label>
+            <Input
+              id="expectedReturnDate"
+              name="expectedReturnDate"
+              type="date"
+              defaultValue={loan ? toDateInputValue(loan.expectedReturnDate) : toDateInputValue(new Date())}
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="reason">Reason (optional)</Label>
+            <Input id="reason" name="reason" placeholder="Optional reason" defaultValue={loan?.reason ?? ""} />
           </div>
           {state?.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
           <DialogFooter>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : "Save"}
+              {isPending ? "Saving..." : mode === "edit" ? "Save changes" : "Add Borrowed Money"}
             </Button>
           </DialogFooter>
         </form>

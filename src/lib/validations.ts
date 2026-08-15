@@ -88,6 +88,20 @@ export const paymentSchema = z.object({
   amount: amountField,
 });
 
+export const moneyBorrowedSchema = z.object({
+  personName: z.string().trim().min(1, "Person name is required").max(120, "Name is too long"),
+  amount: amountField,
+  borrowedDate: dateField,
+  expectedReturnDate: dateField,
+  reason: z.string().trim().max(500, "Reason is too long").optional().or(z.literal("")),
+});
+
+export const investmentSchema = z.object({
+  name: z.string().trim().min(1, "Investment name is required").max(120, "Name is too long"),
+  amount: amountField,
+  investmentDate: dateField,
+});
+
 export const forgotPasswordSchema = z.object({
   email: z.string().trim().min(1, "Email is required").email("Enter a valid email address"),
 });

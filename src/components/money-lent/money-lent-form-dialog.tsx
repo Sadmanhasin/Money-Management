@@ -67,7 +67,7 @@ export function MoneyLentFormDialog({ mode, loan }: Props) {
         ) : (
           <Button size="sm">
             <HandCoins className="size-4" />
-            <span className="hidden sm:inline">Money Lent</span>
+            <span>Money Lent</span>
           </Button>
         )}
       </DialogTrigger>

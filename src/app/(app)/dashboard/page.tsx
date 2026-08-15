@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, CalendarDays, CalendarClock, HandCoins } from "lucide-react";
+import { TrendingUp, TrendingDown, CalendarDays, CalendarClock, HandCoins, Landmark, PiggyBank } from "lucide-react";
 import { auth } from "@/auth";
 import { getDashboardSummary } from "@/lib/data";
 import { getCurrentUser } from "@/lib/current-user";
@@ -20,7 +20,7 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-5 sm:gap-6">
       <WalletCard name={currentUser?.name} email={currentUser?.email} balance={summary.currentBalance} />
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-7">
         <StatCard title="Total Income" value={formatCurrency(summary.totalIncome)} icon={TrendingUp} tone="positive" />
         <StatCard title="Total Expense" value={formatCurrency(summary.totalExpense)} icon={TrendingDown} tone="negative" />
         <StatCard title="Income This Month" value={formatCurrency(summary.monthIncome)} icon={CalendarDays} tone="positive" />
@@ -30,6 +30,20 @@ export default async function DashboardPage() {
           value={formatCurrency(summary.moneyLent.total)}
           subtitle={summary.moneyLent.count > 0 ? `${summary.moneyLent.count} people` : undefined}
           icon={HandCoins}
+          tone="neutral"
+        />
+        <StatCard
+          title="Money Borrowed"
+          value={formatCurrency(summary.moneyBorrowed.total)}
+          subtitle={summary.moneyBorrowed.count > 0 ? `${summary.moneyBorrowed.count} people` : undefined}
+          icon={Landmark}
+          tone="neutral"
+        />
+        <StatCard
+          title="Active Investments"
+          value={formatCurrency(summary.activeInvestments.total)}
+          subtitle={summary.activeInvestments.count > 0 ? `${summary.activeInvestments.count} active` : undefined}
+          icon={PiggyBank}
           tone="neutral"
         />
       </div>

@@ -17,6 +17,8 @@ model User {
   incomes             Income[]
   expenses            Expense[]
   moneyLents          MoneyLent[]
+  moneyBorroweds      MoneyBorrowed[]
+  investments         Investment[]
   passwordResetTokens PasswordResetToken[]
 }
 
@@ -84,6 +86,48 @@ enum LoanStatus {
   PENDING
   PARTIAL
   RECEIVED
+}
+
+model MoneyBorrowed {
+  id                 String        @id @default(cuid())
+  personName         String
+  amount             Decimal       @db.Decimal(12, 2)
+  borrowedDate       DateTime
+  expectedReturnDate DateTime
+  reason             String?
+  status             BorrowStatus  @default(PENDING)
+  userId             String
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum BorrowStatus {
+  PENDING
+  PAID
+}
+
+model Investment {
+  id             String           @id @default(cuid())
+  name           String
+  amount         Decimal          @db.Decimal(12, 2)
+  investmentDate DateTime
+  status         InvestmentStatus @default(ACTIVE)
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  WITHDRAWN
 }
 
 model PasswordResetToken {

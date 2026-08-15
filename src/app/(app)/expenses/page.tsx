@@ -18,7 +18,7 @@ export default async function ExpensesPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <ListFilters years={years} searchPlaceholder="Search by category or note..." />
         <ExpenseFormDialog mode="create" />
       </div>

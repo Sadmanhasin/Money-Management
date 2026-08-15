@@ -2,12 +2,12 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil } from "lucide-react";
+import { PiggyBank, Pencil } from "lucide-react";
 import {
-  createIncomeAction,
-  updateIncomeAction,
-  type IncomeFormState,
-} from "@/actions/income";
+  createInvestmentAction,
+  updateInvestmentAction,
+  type InvestmentFormState,
+} from "@/actions/investment";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,27 +21,27 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-type IncomeRecord = {
+type InvestmentRecord = {
   id: string;
+  name: string;
   amount: number;
-  source: string;
-  date: Date;
-  note: string | null;
+  investmentDate: Date;
 };
 
 type Props =
-  | { mode: "create"; income?: undefined; compact?: boolean }
-  | { mode: "edit"; income: IncomeRecord; compact?: undefined };
+  | { mode: "create"; investment?: undefined }
+  | { mode: "edit"; investment: InvestmentRecord };
 
 function toDateInputValue(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-export function IncomeFormDialog({ mode, income, compact = false }: Props) {
+export function InvestmentFormDialog({ mode, investment }: Props) {
   const [open, setOpen] = useState(false);
   const [submitCount, setSubmitCount] = useState(0);
-  const action = mode === "edit" ? updateIncomeAction.bind(null, income.id) : createIncomeAction;
-  const [state, formAction, isPending] = useActionState<IncomeFormState, FormData>(
+  const action =
+    mode === "edit" ? updateInvestmentAction.bind(null, investment.id) : createInvestmentAction;
+  const [state, formAction, isPending] = useActionState<InvestmentFormState, FormData>(
     action,
     undefined
   );
@@ -51,7 +51,7 @@ export function IncomeFormDialog({ mode, income, compact = false }: Props) {
     if (state?.error) {
       toast.error(state.error);
     } else {
-      toast.success(mode === "edit" ? "Income updated" : "Income added");
+      toast.success(mode === "edit" ? "Investment updated" : "Investment added");
       setOpen(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -61,21 +61,21 @@ export function IncomeFormDialog({ mode, income, compact = false }: Props) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {mode === "edit" ? (
-          <Button variant="ghost" size="icon-sm" aria-label="Edit income">
+          <Button variant="ghost" size="icon-sm" aria-label="Edit investment">
             <Pencil className="size-4" />
           </Button>
         ) : (
           <Button size="sm">
-            <Plus className="size-4" />
-            <span className={compact ? "hidden sm:inline" : ""}>Add Income</span>
+            <PiggyBank className="size-4" />
+            <span>Investment</span>
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{mode === "edit" ? "Edit Income" : "Add Income"}</DialogTitle>
+          <DialogTitle>{mode === "edit" ? "Edit Investment" : "Add Investment"}</DialogTitle>
           <DialogDescription>
-            {mode === "edit" ? "Update this income entry." : "Record a new income entry."}
+            {mode === "edit" ? "Update this investment entry." : "Track money you've moved into an investment."}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -83,6 +83,16 @@ export function IncomeFormDialog({ mode, income, compact = false }: Props) {
           onSubmit={() => setSubmitCount((count) => count + 1)}
           className="flex flex-col gap-4"
         >
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="name">Investment Name</Label>
+            <Input
+              id="name"
+              name="name"
+              placeholder="e.g. Stocks, Mutual Fund, Fixed Deposit"
+              defaultValue={investment?.name}
+              required
+            />
+          </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="amount">Amount</Label>
             <Input
@@ -92,38 +102,26 @@ export function IncomeFormDialog({ mode, income, compact = false }: Props) {
               step="0.01"
               min="0.01"
               placeholder="0.00"
-              defaultValue={income?.amount}
+              defaultValue={investment?.amount}
               required
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="source">Source</Label>
+            <Label htmlFor="investmentDate">Investment Date</Label>
             <Input
-              id="source"
-              name="source"
-              placeholder="e.g. Salary, Freelance"
-              defaultValue={income?.source}
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="date">Date</Label>
-            <Input
-              id="date"
-              name="date"
+              id="investmentDate"
+              name="investmentDate"
               type="date"
-              defaultValue={income ? toDateInputValue(income.date) : toDateInputValue(new Date())}
+              defaultValue={
+                investment ? toDateInputValue(investment.investmentDate) : toDateInputValue(new Date())
+              }
               required
             />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="note">Note (optional)</Label>
-            <Input id="note" name="note" placeholder="Optional note" defaultValue={income?.note ?? ""} />
           </div>
           {state?.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
           <DialogFooter>
             <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : "Save"}
+              {isPending ? "Saving..." : mode === "edit" ? "Save changes" : "Add Investment"}
             </Button>
           </DialogFooter>
         </form>
